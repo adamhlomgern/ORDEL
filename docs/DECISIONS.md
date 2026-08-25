@@ -6,6 +6,45 @@ entries at the top.
 
 ---
 
+## Downgraded from Expo SDK 57 to SDK 54
+
+**Context:** V0.0 was originally scaffolded with `create-expo-app@latest`,
+which resolved Expo SDK 57. When testing on a physical iPhone via Expo Go
+from the Apple App Store, the app failed with "Project is incompatible with
+this version of Expo Go." Investigation found that as of May 2026, Expo Go is
+no longer being updated on the Apple App Store — Apple has a newer submission
+(SDK 55) stuck in review with no timeline, so the App Store build is frozen
+at **SDK 54**. Expo Go for SDK 55+ is only available via `eas go` + TestFlight
+(requires an Apple Developer Program membership) or the iOS Simulator
+(requires a Mac, which this project's dev machine does not have).
+
+**Decision:** downgraded `apps/mobile` to Expo SDK 54 (`expo@~54.0.0`, with
+`react@19.1.0`, `react-native@0.81.5`, and all other Expo-managed packages
+aligned via `npx expo install --fix`) so the app runs on the actual, currently
+available Expo Go app from the App Store — no Apple Developer account needed.
+
+**Why:** `MASTER_PRODUCT_BRIEF.md` sections 7-8 explicitly mandate staying on
+Expo Go "whenever reasonably possible" for initial distribution. Since Expo
+Go's real-world App Store availability is now capped at SDK 54, "latest SDK"
+and "Expo Go compatible" are no longer the same thing — SDK 54 is the correct
+choice to honor the brief's actual intent.
+
+**Revisit when:** Apple approves a newer Expo Go build on the App Store, or
+the project intentionally moves off Expo Go (e.g. via `eas go`/TestFlight or
+a development build) for a documented reason per brief section 8.
+
+**Also discovered during this fix:** the initial SDK 57 -> 54 downgrade left
+a stale nested `react-native@0.86.2` copy under `expo-status-bar`'s dependency
+subtree (an artifact of `npm install`/`expo install --fix` not fully pruning
+orphaned nested packages across a major version jump), which broke Jest
+module resolution (`Cannot find module 'expo-modules-core'`) despite
+`npm ls` reporting a clean tree. Fixed by wiping all `node_modules` and
+`package-lock.json` and reinstalling from scratch. **Lesson:** after any
+Expo SDK version change, prefer a full clean reinstall over incremental
+`npm install`/`npm dedupe` to avoid this class of bug.
+
+---
+
 ## V0.0 — Foundation decisions
 
 ### Monorepo tooling: npm workspaces

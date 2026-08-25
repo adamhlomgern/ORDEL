@@ -1,1 +1,3 @@
 # Egna regler och funktioner
+
+---
