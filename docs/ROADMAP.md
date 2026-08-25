@@ -6,24 +6,25 @@ update it as versions complete.
 
 ## Current version
 
-**V0.0 — Foundation.** Status: implemented, pending final Supabase-connection
-verification (needs Docker running locally — see `README.md`).
+**V0.0 — Foundation.** Status: **complete**. All acceptance criteria from
+`MASTER_PRODUCT_BRIEF.md` section 53 verified, including running the app in
+Expo Go on a physical iPhone with a live local Supabase connection.
 
 ## Version overview
 
-| Version | Goal                                                                                       | Status      |
-| ------- | ------------------------------------------------------------------------------------------ | ----------- |
-| V0.0    | Foundation: repo, Expo app, Supabase wiring, game-engine/dictionary skeletons, tests, docs | In progress |
-| V0.1    | First complete game: two known users play a full Classic match                             | Not started |
-| V0.2    | Game feel: board interaction, animation, haptics, polish                                   | Not started |
-| V0.3    | Social core: friends, chat, rematch, block/report                                          | Not started |
-| V0.4    | Private beta readiness                                                                     | Not started |
-| V0.5    | Matchmaking + rating                                                                       | Not started |
-| V0.6    | Depth: statistics, replay, saved words                                                     | Not started |
-| V0.7    | Live (real-time timed) mode                                                                | Not started |
-| V0.8    | Daily challenge                                                                            | Not started |
-| V0.9    | Competitive system (ranked/leagues/tournaments) — needs separate detailed planning         | Not started |
-| V1.0    | Public release                                                                             | Not started |
+| Version | Goal                                                                                       | Status       |
+| ------- | ------------------------------------------------------------------------------------------ | ------------ |
+| V0.0    | Foundation: repo, Expo app, Supabase wiring, game-engine/dictionary skeletons, tests, docs | **Complete** |
+| V0.1    | First complete game: two known users play a full Classic match                             | Not started  |
+| V0.2    | Game feel: board interaction, animation, haptics, polish                                   | Not started  |
+| V0.3    | Social core: friends, chat, rematch, block/report                                          | Not started  |
+| V0.4    | Private beta readiness                                                                     | Not started  |
+| V0.5    | Matchmaking + rating                                                                       | Not started  |
+| V0.6    | Depth: statistics, replay, saved words                                                     | Not started  |
+| V0.7    | Live (real-time timed) mode                                                                | Not started  |
+| V0.8    | Daily challenge                                                                            | Not started  |
+| V0.9    | Competitive system (ranked/leagues/tournaments) — needs separate detailed planning         | Not started  |
+| V1.0    | Public release                                                                             | Not started  |
 
 ## Decisions needed before V0.1
 

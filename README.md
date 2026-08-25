@@ -24,6 +24,14 @@ npx supabase start                              # starts local Postgres/Auth/Rea
 `apps/mobile/.env` as `EXPO_PUBLIC_SUPABASE_URL` and
 `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
+**Testing on a physical phone:** `supabase start` prints `127.0.0.1` as the
+API host, but that means "this device" — on your phone that's the phone
+itself, not your computer. Replace it in `EXPO_PUBLIC_SUPABASE_URL` with your
+computer's LAN IP instead (Windows: `ipconfig`, look for "IPv4 Address";
+it's also shown by `expo start` as the `exp://<ip>:8081` address), e.g.
+`http://192.168.0.80:54321`. This IP can change when you reconnect to Wi-Fi —
+if the backend suddenly becomes unreachable again, check it hasn't changed.
+
 ## Run the app
 
 ```bash
