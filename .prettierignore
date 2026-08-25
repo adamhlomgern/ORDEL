@@ -1,0 +1,12 @@
+node_modules
+.expo
+dist
+coverage
+ios
+android
+package-lock.json
+
+# Authoritative source-of-truth docs — never auto-reformatted.
+docs/MASTER_PRODUCT_BRIEF.md
+docs/GAME_RULES.md
+docs/DICTIONARY_POLICY.md
