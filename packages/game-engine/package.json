@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ordel/dictionary": "*",
     "@ordel/types": "*"
   },
   "devDependencies": {

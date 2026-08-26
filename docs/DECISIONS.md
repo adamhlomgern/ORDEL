@@ -6,6 +6,62 @@ entries at the top.
 
 ---
 
+## V0.1 Milestone A — game engine + schema decisions
+
+### `makeMove()` gained `actingPlayerId` and `dictionary` parameters
+
+**Context:** the V0.0 stub was `makeMove(gameState, proposedMove)`. Turn
+ownership verification and dictionary validation are both explicitly the
+engine's job (`MASTER_PRODUCT_BRIEF.md` section 12), and neither is possible
+without knowing who is acting or having a dictionary to check words against.
+**Decision:** `makeMove(gameState, proposedMove, actingPlayerId, dictionary, rng?)`.
+`dictionary` is typed against `@ordel/dictionary`'s `DictionaryProvider`
+interface only — the engine never imports a concrete implementation, so it
+stays agnostic to which dictionary is active (the dev fixture today, the
+real `ordel-sv` pipeline later). `rng` is an optional injectable random
+source (defaults to `Math.random`) so tile-bag operations stay deterministic
+in tests.
+
+### `GameState.tileBagRemaining: number` replaced with `GameState.tileBag: RackTile[]`
+
+**Context:** the V0.0 type only stored a count, but the engine needs the
+actual remaining tiles to draw from. **Decision:** `GameState` (the
+authoritative, server-side representation the engine operates on) now holds
+the real tile array; a client-facing count is derived at the DB/view layer
+(`games_public.tile_bag_remaining`), never duplicated as a second field on
+the type itself, per `MASTER_PRODUCT_BRIEF.md` section 69 ("avoid duplicated
+state").
+
+### RLS + masking views: views must do their own row filtering, not rely on RLS running inside them
+
+**Context:** the initial migration draft assumed a `SECURITY DEFINER`-style
+view (running with the owner's privileges, so it could read a column like
+`rack` the calling role has no grant on) would still have its base table's
+`FORCE ROW LEVEL SECURITY` policy enforced during that owner-context query.
+This is wrong whenever the view's owner is a superuser (true for the default
+`postgres` role migrations run as) — superusers bypass RLS entirely
+regardless of `FORCE ROW LEVEL SECURITY`, which would have made
+`game_players_public`/`moves_public`/`games_public` leak every row in the
+table to every authenticated user (column masking would still have hidden
+the opponent's `rack` value itself, but not the row's existence).
+
+**Decision:** every masking view filters its own rows explicitly with
+`WHERE EXISTS (... auth.uid() ...)` rather than depending on the base
+table's RLS policy being active during the view's execution. The base-table
+RLS policies are kept anyway as defense in depth for any future non-owner
+access path. See `docs/DATABASE.md` and
+`supabase/migrations/00000000000002_v01_schema.sql`.
+
+### Base tables (`games`/`game_players`/`moves`) have zero direct grants to `authenticated`/`anon`
+
+**Decision:** clients can only ever read these three tables through the
+masking views above. Granting `SELECT` on the base tables directly — even
+with RLS enabled — would let a client bypass the view and read `tile_bag` or
+another player's `rack` straight from PostgREST, since RLS only filters
+which rows are visible, not which columns.
+
+---
+
 ## Downgraded from Expo SDK 57 to SDK 54
 
 **Context:** V0.0 was originally scaffolded with `create-expo-app@latest`,

@@ -1,5 +1,5 @@
 import type { BoardCoordinate } from './board';
-import type { Letter, Rack } from './tiles';
+import type { Letter, Rack, RackTile } from './tiles';
 
 /**
  * Turn duration presets per GAME_RULES.md section 46. Kept as the exact
@@ -54,7 +54,16 @@ export interface GameState {
   board: BoardTileState[];
   players: GamePlayer[];
   currentTurnPlayerId: string | null;
-  tileBagRemaining: number;
+  /**
+   * The actual ordered, undrawn tiles remaining in the shared bag. This is
+   * authoritative server-side state (GameState represents what the engine
+   * operates on) — a client-facing view exposes only `tileBag.length`
+   * (GAME_RULES.md section 4: "number of tiles remaining ... MAY be
+   * visible", never the tiles themselves). Deliberately not duplicated as a
+   * separate count field here to avoid the two ever drifting apart
+   * (MASTER_PRODUCT_BRIEF.md section 69).
+   */
+  tileBag: RackTile[];
   scorelessTurnCount: number;
   endReason: GameEndReason;
   createdAt: string;

@@ -6,44 +6,52 @@ update it as versions complete.
 
 ## Current version
 
-**V0.0 — Foundation.** Status: **complete**. All acceptance criteria from
-`MASTER_PRODUCT_BRIEF.md` section 53 verified, including running the app in
-Expo Go on a physical iPhone with a live local Supabase connection.
+**V0.1 — First complete game.** In progress. **Milestone A (game engine +
+database schema) complete**: real `makeMove()` rule engine with 75 passing
+tests covering placement/word-extraction/dictionary/scoring/SJUA/rack/
+turns/end-game, plus the `profiles`/`games`/`game_players`/`moves` schema
+with RLS + column-masking views. Not yet built: the Edge Function that wires
+the engine to the database, auth screens (OTP), game creation/invite flow,
+Home screen, and board UI.
+
+Previous version — **V0.0 — Foundation**: complete. All acceptance criteria
+from `MASTER_PRODUCT_BRIEF.md` section 53 verified, including running the
+app in Expo Go on a physical iPhone with a live local Supabase connection.
 
 ## Version overview
 
-| Version | Goal                                                                                       | Status       |
-| ------- | ------------------------------------------------------------------------------------------ | ------------ |
-| V0.0    | Foundation: repo, Expo app, Supabase wiring, game-engine/dictionary skeletons, tests, docs | **Complete** |
-| V0.1    | First complete game: two known users play a full Classic match                             | Not started  |
-| V0.2    | Game feel: board interaction, animation, haptics, polish                                   | Not started  |
-| V0.3    | Social core: friends, chat, rematch, block/report                                          | Not started  |
-| V0.4    | Private beta readiness                                                                     | Not started  |
-| V0.5    | Matchmaking + rating                                                                       | Not started  |
-| V0.6    | Depth: statistics, replay, saved words                                                     | Not started  |
-| V0.7    | Live (real-time timed) mode                                                                | Not started  |
-| V0.8    | Daily challenge                                                                            | Not started  |
-| V0.9    | Competitive system (ranked/leagues/tournaments) — needs separate detailed planning         | Not started  |
-| V1.0    | Public release                                                                             | Not started  |
+| Version | Goal                                                                                       | Status          |
+| ------- | ------------------------------------------------------------------------------------------ | --------------- |
+| V0.0    | Foundation: repo, Expo app, Supabase wiring, game-engine/dictionary skeletons, tests, docs | **Complete**    |
+| V0.1    | First complete game: two known users play a full Classic match                             | **In progress** |
+| V0.2    | Game feel: board interaction, animation, haptics, polish                                   | Not started     |
+| V0.3    | Social core: friends, chat, rematch, block/report                                          | Not started     |
+| V0.4    | Private beta readiness                                                                     | Not started     |
+| V0.5    | Matchmaking + rating                                                                       | Not started     |
+| V0.6    | Depth: statistics, replay, saved words                                                     | Not started     |
+| V0.7    | Live (real-time timed) mode                                                                | Not started     |
+| V0.8    | Daily challenge                                                                            | Not started     |
+| V0.9    | Competitive system (ranked/leagues/tournaments) — needs separate detailed planning         | Not started     |
+| V1.0    | Public release                                                                             | Not started     |
 
-## Decisions needed before V0.1
+## Remaining V0.1 work (after Milestone A)
 
-These are open product/technical decisions flagged during V0.0 that must be
-resolved before V0.1 gameplay work begins (per `MASTER_PRODUCT_BRIEF.md`
-section 1's rule: don't silently invent missing rules).
+- **Edge Function write path**: `submit-turn-action` calling `@ordel/game-engine`
+  directly, plus a restricted (`service_role`-only) Postgres function that
+  atomically persists an already-validated result. See `docs/DECISIONS.md`
+  for why the split is designed that way.
+- **Auth screens**: OTP entry + first-login username picker (auth method
+  already decided — email OTP, not magic links, to avoid Expo Go deep-link
+  friction).
+- **Game creation/invite flow**: dealing racks, shuffling the bag, picking
+  the starting player.
+- **Home screen**: YOUR TURN / WAITING, backed by the `my_games` view.
+- **Board UI**: tile placement, score preview, submit.
 
-- **Auth method**: email magic link vs. OTP vs. Sign in with Apple first —
-  brief section 39 leaves this open pending Expo/Supabase reliability
-  research.
-- **Real `ordel-sv-1.0` dictionary pipeline**: SALDO import, Sprakradet new
-  words, Swedish names (>=100 threshold), Lantmateriet place names, and the
-  initial Ordel Extended dataset all need to be built per
-  `DICTIONARY_POLICY.md` sections 63-77 before V0.1 can be "gameplay-complete"
-  per `GAME_RULES.md` section 80.
-- **Full `makeMove()` rule engine**: placement/connectivity/dictionary
-  validation/scoring/SJUA — the actual V0.1 core deliverable.
-- **Database schema for `profiles`/`games`/`game_players`/`moves`** — design
-  per `MASTER_PRODUCT_BRIEF.md` section 41 and document in `DATABASE.md`.
+Still explicitly out of V0.1 scope regardless: the real `ordel-sv-1.0`
+dictionary pipeline (`DICTIONARY_POLICY.md` sections 63-77, gated separately
+per `GAME_RULES.md` section 80 — V0.1 continues using the dev fixture) and
+`TIMEOUT` handling (needs a scheduled job, not just client-submitted moves).
 
 ## Technical debt log
 
