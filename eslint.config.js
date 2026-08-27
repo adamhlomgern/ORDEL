@@ -15,6 +15,11 @@ module.exports = tseslint.config(
       '**/android/**',
       'supabase/.temp/**',
       'supabase/.branches/**',
+      // Deno Edge Functions run outside the Node/TS toolchain entirely (own
+      // module resolution via supabase/functions/deno.json, Deno globals,
+      // npm: specifiers) — verified via `supabase db reset` + curl, not
+      // tsc/eslint. See docs/DECISIONS.md.
+      'supabase/functions/**',
     ],
   },
   js.configs.recommended,
@@ -29,13 +34,26 @@ module.exports = tseslint.config(
   },
   {
     // Root/app-level CommonJS config files (eslint, babel, jest configs).
-    files: ['*.js', 'apps/mobile/babel.config.js', 'apps/mobile/jest.config.js'],
+    files: [
+      '*.js',
+      'apps/mobile/babel.config.js',
+      'apps/mobile/jest.config.js',
+      'apps/mobile/jest.setup.js',
+    ],
     languageOptions: {
       sourceType: 'commonjs',
-      globals: globals.node,
+      globals: { ...globals.node, ...globals.jest },
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    // Root-level Node ESM scripts.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.node,
     },
   },
   prettierConfig,

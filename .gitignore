@@ -16,3 +16,4 @@ android/
 coverage/
 supabase/.branches/
 supabase/.temp/
+supabase/functions/_vendor/

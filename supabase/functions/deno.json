@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@ordel/types": "./_vendor/types/src/index.ts",
+    "@ordel/dictionary": "./_vendor/dictionary/src/index.ts",
+    "@ordel/game-engine": "./_vendor/game-engine/src/index.ts",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+  }
+}

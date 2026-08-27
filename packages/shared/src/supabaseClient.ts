@@ -1,12 +1,29 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  createClient,
+  type SupabaseClient,
+  type SupabaseClientOptions,
+} from '@supabase/supabase-js';
 import { getOrdelEnv } from './env';
 
 let cachedClient: SupabaseClient | null = null;
 
-export function getSupabaseClient(): SupabaseClient {
+/**
+ * `authOptions` lets callers (e.g. the RN app) supply a platform-specific
+ * session storage adapter. This package must stay usable from non-RN
+ * contexts (Node tests today, Deno Edge Functions later per
+ * docs/ARCHITECTURE.md), so it never imports one itself — passing nothing
+ * keeps today's plain, non-persisted client behavior.
+ */
+export function getSupabaseClient(
+  authOptions?: SupabaseClientOptions<'public'>['auth'],
+): SupabaseClient {
   if (!cachedClient) {
     const { supabaseUrl, supabaseAnonKey } = getOrdelEnv();
-    cachedClient = createClient(supabaseUrl, supabaseAnonKey);
+    cachedClient = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      authOptions ? { auth: authOptions } : undefined,
+    );
   }
   return cachedClient;
 }

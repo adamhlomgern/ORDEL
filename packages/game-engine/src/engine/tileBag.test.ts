@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { RackTile } from '@ordel/types';
-import { drawTiles, refillRack, swapTiles } from './tileBag';
+import type { RackTile, TileBagConfig } from '@ordel/types';
+import { buildInitialTileBag, drawTiles, refillRack, swapTiles } from './tileBag';
+import { ORDEL_SV_TILES_1 } from '../tiles/svClassicTiles';
 
 function tile(id: string, letter = 'A'): RackTile {
   return { id, kind: 'letter', letter: letter as never, value: 1 };
@@ -111,5 +112,42 @@ describe('swapTiles', () => {
       // The returned rack tiles are now sitting in the bag.
       expect(rack.every((t) => result.bag.some((b) => b.id === t.id))).toBe(true);
     }
+  });
+});
+
+describe('buildInitialTileBag', () => {
+  const fixtureConfig: TileBagConfig = {
+    id: 'fixture',
+    tiles: [
+      { letter: 'A', count: 2, value: 1 },
+      { letter: 'B', count: 1, value: 4 },
+    ],
+    blankCount: 1,
+  };
+
+  it('expands counts into individually-identified tiles with unique ids', () => {
+    const bag = buildInitialTileBag(fixtureConfig, sequentialRng);
+    expect(bag).toHaveLength(4);
+    expect(new Set(bag.map((t) => t.id)).size).toBe(4);
+    expect(bag.filter((t) => t.kind === 'blank')).toHaveLength(1);
+    expect(bag.filter((t) => t.kind === 'letter' && t.letter === 'A')).toHaveLength(2);
+  });
+
+  it('blank tiles have no assigned letter and are worth 0', () => {
+    const bag = buildInitialTileBag(fixtureConfig, sequentialRng);
+    const blank = bag.find((t) => t.kind === 'blank');
+    expect(blank).toEqual({ id: 'blank-0', kind: 'blank', assignedLetter: null, value: 0 });
+  });
+
+  it('shuffles deterministically for a given rng (Fisher-Yates, rng always picks index 0)', () => {
+    const bag = buildInitialTileBag(fixtureConfig, sequentialRng);
+    expect(bag.map((t) => t.id)).toEqual(['A-1', 'B-0', 'blank-0', 'A-0']);
+  });
+
+  it('produces the full ordel-sv-tiles-1 distribution: 98 letters + 2 blanks = 100', () => {
+    const bag = buildInitialTileBag(ORDEL_SV_TILES_1);
+    expect(bag).toHaveLength(100);
+    expect(bag.filter((t) => t.kind === 'blank')).toHaveLength(2);
+    expect(new Set(bag.map((t) => t.id)).size).toBe(100);
   });
 });

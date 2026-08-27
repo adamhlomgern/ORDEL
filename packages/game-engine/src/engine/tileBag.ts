@@ -1,4 +1,4 @@
-import type { Rack, RackTile } from '@ordel/types';
+import type { Rack, RackTile, TileBagConfig } from '@ordel/types';
 
 /** Returns a value in [0, 1). Injectable so tests are deterministic; production
  * callers (e.g. the future Edge Function) should inject a cryptographically
@@ -8,6 +8,42 @@ export type RandomSource = () => number;
 
 const FULL_RACK_SIZE = 7;
 const MINIMUM_BAG_FOR_SWAP = 7;
+
+/**
+ * Expands a `TileBagConfig` into concrete, individually-identified
+ * `RackTile[]` and shuffles them. The initial shuffle must happen
+ * server-side via a reliable mechanism, never client-chosen (GAME_RULES.md
+ * section 58) — callers outside tests should inject a cryptographically
+ * secure `rng`.
+ */
+export function buildInitialTileBag(
+  tileConfig: TileBagConfig,
+  rng: RandomSource = Math.random,
+): RackTile[] {
+  const tiles: RackTile[] = [];
+
+  for (const definition of tileConfig.tiles) {
+    for (let i = 0; i < definition.count; i++) {
+      tiles.push({
+        id: `${definition.letter}-${i}`,
+        kind: 'letter',
+        letter: definition.letter,
+        value: definition.value,
+      });
+    }
+  }
+
+  for (let i = 0; i < tileConfig.blankCount; i++) {
+    tiles.push({ id: `blank-${i}`, kind: 'blank', assignedLetter: null, value: 0 });
+  }
+
+  for (let i = tiles.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [tiles[i], tiles[j]] = [tiles[j]!, tiles[i]!];
+  }
+
+  return tiles;
+}
 
 function drawOne(bag: RackTile[], rng: RandomSource): { tile: RackTile; remaining: RackTile[] } {
   const index = Math.floor(rng() * bag.length);

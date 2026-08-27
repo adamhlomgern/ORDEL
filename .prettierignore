@@ -5,6 +5,7 @@ coverage
 ios
 android
 package-lock.json
+supabase/functions/_vendor
 
 # Authoritative source-of-truth docs — never auto-reformatted.
 docs/MASTER_PRODUCT_BRIEF.md

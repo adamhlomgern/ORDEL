@@ -1,11 +1,12 @@
-# Ordel — Database (V0.1, schema-only slice)
+# Ordel — Database
 
-This describes the schema introduced by
-`supabase/migrations/00000000000002_v01_schema.sql`. No client code writes to
-these tables yet — game creation and move submission are a separate,
-not-yet-built slice (an Edge Function calling `@ordel/game-engine`, then a
-restricted Postgres function that persists the result atomically; see
-`docs/DECISIONS.md`). This migration is additive schema only.
+This describes the schema from `supabase/migrations/00000000000002_v01_schema.sql`
+and the write path added in `00000000000003_v01_write_path.sql`. No client
+ever writes to `games`/`game_players`/`moves` directly — they have zero
+mutation grants to `authenticated`/`anon` — writes only happen through the
+two Edge Functions under `supabase/functions/` (`create-game`,
+`submit-turn-action`), which call `@ordel/game-engine` directly and then
+persist through a restricted Postgres function (see `docs/DECISIONS.md`).
 
 ## Tables
 
@@ -46,8 +47,11 @@ here uses two layers:
    `tile_bag_remaining`, per `GAME_RULES.md` section 4), `game_players_public`
    (masks `rack` to `null` unless `player_id = auth.uid()`, always exposes
    `rack_tile_count`), and `moves_public` (masks `swapped_tile_ids` the same
-   way) — plus a convenience `my_games` view backing the future Home
-   screen's "YOUR TURN"/"WAITING" grouping.
+   way) — plus `my_games`, which backs the Home screen's DIN TUR/VÄNTAR
+   grouping and additionally exposes `is_my_turn`, `opponent_id`, and
+   `opponent_username` (a self-join against `game_players_public`/
+   `profiles` for "the other participant" — unambiguous since Classic games
+   always have exactly 2 players, `GAME_RULES.md` section 4).
 
 **Important implementation detail:** these views do their own explicit
 `auth.uid()`-based row filtering in their `WHERE` clause, rather than relying
@@ -58,6 +62,32 @@ migrations run as), RLS — even with `FORCE ROW LEVEL SECURITY` — does not
 apply to it at all. Making each view self-filtering means correctness never
 depends on that detail. The base-table RLS policies remain as defense in
 depth for any future access path that isn't a superuser.
+
+## The write path
+
+Two `SECURITY DEFINER` Postgres functions, executable only by
+`service_role` (`revoke ... from public, anon, authenticated`; see
+`docs/DECISIONS.md` for why that's safe here and not a repeat of the views
+mistake below):
+
+- **`create_classic_game(...)`** — inserts one `games` row + two
+  `game_players` rows atomically. Called by `supabase/functions/create-game`
+  after it has already shuffled the bag, dealt both racks, and picked the
+  starting player in TypeScript via `@ordel/game-engine`. Both players are
+  inserted as `'accepted'` and the game starts `'active'` immediately — no
+  separate invite/accept step exists yet.
+- **`apply_move_result(...)`** — persists one already-validated
+  `makeMove()` result: an idempotency pre-check against
+  `(game_id, player_id, client_move_id)` (returns the original result on a
+  duplicate, never re-applies), a `turn_version`-guarded row lock
+  (`for update`, raising `40001` on a mismatch), inserting the `moves` row,
+  and updating `games` + `game_players` from the resulting state — all in
+  one transaction. Called by `supabase/functions/submit-turn-action`.
+
+`service_role` also holds explicit `select` grants on `profiles`/`games`/
+`game_players`/`moves` for the Edge Functions' own direct reads (opponent
+lookup, idempotency check, loading current state) — `BYPASSRLS` skips RLS
+policies, not table-level grants, so these had to be added explicitly.
 
 ## `app_health`
 
@@ -79,8 +109,6 @@ replaced.
 
 ## Not yet designed (deferred)
 
-- The Edge Function / restricted Postgres function write path that actually
-  populates these tables.
 - `TIMEOUT` handling (a scheduled job, not a client-submitted action).
-- Game creation / invite-acceptance (dealing racks, shuffling the bag,
-  picking the starting player).
+- A real invite/accept flow (`game_players.status = 'invited'` is currently
+  unused — both rows are created `'accepted'` directly).

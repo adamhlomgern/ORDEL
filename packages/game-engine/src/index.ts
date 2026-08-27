@@ -8,6 +8,12 @@ export { validateWords } from './engine/dictionaryValidation';
 export { scoreWords } from './engine/scoring';
 export { isSjuaEligible, SJUA_BONUS } from './engine/sjua';
 export { commitPlacements } from './engine/boardMutation';
-export { drawTiles, refillRack, swapTiles, type RandomSource } from './engine/tileBag';
+export {
+  buildInitialTileBag,
+  drawTiles,
+  refillRack,
+  swapTiles,
+  type RandomSource,
+} from './engine/tileBag';
 export { applyPass, applySwap, applyResign } from './engine/turnActions';
 export { applyEndGameConditions } from './engine/endGame';

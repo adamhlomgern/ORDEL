@@ -233,15 +233,29 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Production SMTP (Resend) — pushed to the cloud project directly via
+# `RESEND_API_KEY=... supabase config push`, deliberately NOT enabled here.
+# Local dev keeps using Mailpit (see supabase/templates/magic_link.html);
+# enabling this locally would make `supabase start` send real emails
+# through Resend instead of capturing them locally, and would fail to
+# start at all for anyone without RESEND_API_KEY set. See docs/DECISIONS.md.
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_API_KEY)"
+# admin_email = "onboarding@resend.dev"
+# sender_name = "Ordel"
+
+# The default local (Mailpit) magic-link template only shows a clickable
+# link, not the 6-digit code — but the app's OTP flow (docs/DECISIONS.md,
+# V0.1 Milestone B) needs the code itself, since we deliberately don't
+# support tapping a magic link from Expo Go. This override makes the local
+# dev email show {{ .Token }} so the OTP screen can actually be tested.
+[auth.email.template.magic_link]
+subject = "Din engångskod till Ordel"
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

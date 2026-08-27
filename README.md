@@ -12,25 +12,41 @@ current status.
 - Docker Desktop (for local Supabase)
 - An iPhone with the **Expo Go** app (primary way to run this during V0.x)
 
-## Setup
+## Backend: hosted, not local
+
+`apps/mobile/.env` points at a real hosted Supabase project
+(`kqoqjljlpkktgatgugmk`, `eu-west-1`), not local Docker — this is what lets
+anyone with the app reach the same backend regardless of network, which
+local Docker (LAN-only) can't do. See `docs/DECISIONS.md` for why this
+changed and its current limitation (Resend sandbox email may only deliver
+to the Resend account owner's own address until a sending domain is
+verified).
+
+Local Supabase via Docker is still used for **development** — running
+migrations/Edge Functions against a disposable local stack before pushing
+them to the hosted project. That workflow is unchanged:
 
 ```bash
 npm install
-cp apps/mobile/.env.example apps/mobile/.env   # fill in Supabase values below
-npx supabase start                              # starts local Postgres/Auth/Realtime via Docker
+npm run sync:edge-functions   # required before starting Supabase — see below
+npx supabase start            # starts local Postgres/Auth/Realtime/Edge Functions via Docker
 ```
 
-`supabase start` prints a local API URL and `anon key` — put those into
-`apps/mobile/.env` as `EXPO_PUBLIC_SUPABASE_URL` and
-`EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+`npm run sync:edge-functions` copies `packages/{types,dictionary,game-engine}/src`
+into `supabase/functions/_vendor/` (gitignored). This is a workaround for a
+Supabase CLI limitation, not a design choice — see `docs/DECISIONS.md`.
+**Re-run it after any change to those three packages**, then restart
+`supabase start` if it was already running.
 
-**Testing on a physical phone:** `supabase start` prints `127.0.0.1` as the
-API host, but that means "this device" — on your phone that's the phone
-itself, not your computer. Replace it in `EXPO_PUBLIC_SUPABASE_URL` with your
-computer's LAN IP instead (Windows: `ipconfig`, look for "IPv4 Address";
-it's also shown by `expo start` as the `exp://<ip>:8081` address), e.g.
-`http://192.168.0.80:54321`. This IP can change when you reconnect to Wi-Fi —
-if the backend suddenly becomes unreachable again, check it hasn't changed.
+To push schema/function changes to the hosted project once they're
+verified locally:
+
+```bash
+npx supabase link --project-ref kqoqjljlpkktgatgugmk
+npx supabase db push
+npx supabase functions deploy create-game
+npx supabase functions deploy submit-turn-action
+```
 
 ## Run the app
 

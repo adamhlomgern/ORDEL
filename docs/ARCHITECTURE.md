@@ -86,10 +86,25 @@ used purely to prove the full path: client → Supabase → Postgres → Row Lev
 Security → back to the client. RLS is enabled from this very first table,
 establishing the convention from day one (`MASTER_PRODUCT_BRIEF.md` section 40) rather than bolting it on later.
 
-Supabase Realtime, Auth, and Edge Functions are configured by
-`supabase/config.toml` but not used by any app code yet — that begins in
-V0.1 (`GAME_RULES.md` server-authority model, `MASTER_PRODUCT_BRIEF.md`
-section 39 auth).
+Supabase Auth (V0.1 Milestone B) and Edge Functions (V0.1 Milestone C) are
+now in use; Realtime is still configured but unused.
+
+## Edge Functions (V0.1 Milestone C)
+
+`supabase/functions/create-game` and `supabase/functions/submit-turn-action`
+import `@ordel/game-engine`/`@ordel/types`/`@ordel/dictionary` directly —
+the engine is never reimplemented for the server, exactly per the rule
+above that `@ordel/game-engine` must never depend on Supabase (it doesn't;
+the Edge Functions depend on it, not the other way around).
+
+This comes with one real wrinkle: Supabase's local dev tooling
+(`supabase start` / `supabase functions serve`) only bind-mounts
+`supabase/functions/` into the edge-runtime container, so a relative import
+reaching into `packages/` isn't visible on disk inside the container no
+matter what the import map says. `npm run sync:edge-functions` copies the
+three packages into `supabase/functions/_vendor/` (gitignored) as a
+workaround — re-run it after changing any of those packages. Full
+rationale in `docs/DECISIONS.md`.
 
 ## What V0.0 deliberately does not include
 
